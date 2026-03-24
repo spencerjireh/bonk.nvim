@@ -4,6 +4,8 @@ AI code completions in Neovim, powered by Claude. A self-hosted alternative to S
 
 You press a key, ghost text streams in, you hit tab. That's it.
 
+> **Heads up:** bonk.nvim is in early development. APIs will change, features may break between commits, and there are rough edges everywhere. If you use it today, pin to a specific commit.
+
 ## Requirements
 
 - Neovim >= 0.10.0
@@ -141,3 +143,7 @@ bonk.nvim is being built in phases:
 - **Phase 2: Chat** -- a split/float panel for asking questions about your code with conversation history.
 
 > Agent mode was considered but intentionally dropped -- Claude Code in a terminal is strictly better for multi-file edits. bonk.nvim focuses on what an editor plugin does best: inline completions and contextual chat.
+
+## License
+
+[MIT](LICENSE)
