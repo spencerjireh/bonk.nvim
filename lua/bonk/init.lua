@@ -5,8 +5,12 @@ function M.setup(opts)
 
   local config = require('bonk.config').get()
 
-  -- Create highlight group
+  -- Create highlight groups
   vim.api.nvim_set_hl(0, 'BonkGhost', { link = config.highlights.ghost_text, default = true })
+  vim.api.nvim_set_hl(0, 'BonkChatUser', { link = config.highlights.chat_user, default = true })
+  vim.api.nvim_set_hl(0, 'BonkChatToolUse', { link = config.highlights.chat_tool_use, default = true })
+  vim.api.nvim_set_hl(0, 'BonkDiffAdd', { link = config.highlights.diff_add, default = true })
+  vim.api.nvim_set_hl(0, 'BonkDiffDelete', { link = config.highlights.diff_delete, default = true })
 
   -- Auto-dismiss autocmds
   local group = vim.api.nvim_create_augroup('bonk', { clear = true })
@@ -22,6 +26,13 @@ function M.setup(opts)
       end,
     })
   end
+
+  -- :BonkReload command
+  vim.api.nvim_create_user_command('BonkReload', function()
+    local current_config = require('bonk.config').get()
+    require('bonk.reload').reload()
+    require('bonk').setup(current_config)
+  end, { desc = 'Reload all bonk.nvim Lua modules' })
 
   -- Unregister client on exit
   vim.api.nvim_create_autocmd('VimLeavePre', {
@@ -50,6 +61,64 @@ end
 
 function M.cancel()
   require('bonk.completion').cancel()
+end
+
+-- Chat API
+function M.chat_open()
+  require('bonk.chat').open()
+end
+
+function M.chat_close()
+  require('bonk.chat').close()
+end
+
+function M.chat_toggle()
+  require('bonk.chat').toggle()
+end
+
+function M.chat_send()
+  require('bonk.chat').send()
+end
+
+function M.chat_clear()
+  require('bonk.chat').clear()
+end
+
+function M.chat_ask(text)
+  require('bonk.chat').ask(text)
+end
+
+-- Agent API
+function M.agent_start(task)
+  require('bonk.agent').start(task)
+end
+
+function M.agent_stop()
+  require('bonk.agent').stop()
+end
+
+function M.agent_apply()
+  require('bonk.agent').apply()
+end
+
+function M.agent_reject()
+  require('bonk.agent').reject()
+end
+
+function M.agent_diff_next()
+  require('bonk.agent').diff_next()
+end
+
+function M.agent_diff_prev()
+  require('bonk.agent').diff_prev()
+end
+
+function M.agent_diff_accept()
+  require('bonk.agent').diff_accept()
+end
+
+function M.agent_diff_reject()
+  require('bonk.agent').diff_reject()
 end
 
 return M

@@ -1,4 +1,5 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
+import type { Options } from '@anthropic-ai/claude-agent-sdk';
 
 const COMPLETION_SYSTEM_PROMPT = `You are a code completion engine. Given a file with a cursor position marked by <|CURSOR|>, output ONLY the code that should be inserted at that position.
 
@@ -37,30 +38,31 @@ export async function* streamCompletion(
   let fullText = '';
 
   try {
-    for await (const message of query({
-      prompt,
-      options: {
-        systemPrompt: COMPLETION_SYSTEM_PROMPT,
-        maxTurns: 1,
-        allowedTools: [],
-        disallowedTools: [],
-        permissionMode: 'bypassPermissions',
-        allowDangerouslySkipPermissions: true,
-        model: options.model ?? 'claude-opus-4-6',
-        cwd: options.cwd,
-      },
-    })) {
+    const queryOpts: Options = {
+      systemPrompt: COMPLETION_SYSTEM_PROMPT,
+      maxTurns: 1,
+      allowedTools: [],
+      disallowedTools: [],
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
+      model: options.model ?? 'claude-opus-4-6',
+      cwd: options.cwd,
+    };
+
+    for await (const message of query({ prompt, options: queryOpts })) {
       if (signal?.aborted) break;
 
+      if (!('type' in message)) continue;
+
       // Final result message
-      if ('result' in message && typeof message.result === 'string') {
+      if (message.type === 'result' && 'subtype' in message && message.subtype === 'success') {
         fullText = message.result;
         continue;
       }
 
       // Intermediate assistant messages with content blocks
-      if (message && typeof message === 'object' && 'content' in message) {
-        const content = (message as any).content;
+      if (message.type === 'assistant') {
+        const content = message.message.content;
         if (Array.isArray(content)) {
           for (const block of content) {
             if (block?.type === 'text' && typeof block.text === 'string') {

@@ -19,6 +19,12 @@ local function parse_sse_lines(lines, callbacks)
             callbacks.on_done(parsed)
           elseif event_type == 'error' and callbacks.on_error then
             callbacks.on_error(parsed)
+          elseif event_type == 'tool_use' and callbacks.on_tool_use then
+            callbacks.on_tool_use(parsed)
+          elseif event_type == 'status' and callbacks.on_status then
+            callbacks.on_status(parsed)
+          elseif event_type == 'diff' and callbacks.on_diff then
+            callbacks.on_diff(parsed)
           end
         end
       end
@@ -102,7 +108,9 @@ end
 function M.post(url, body, callback)
   local json_body = utils.json_encode(body)
   if not json_body then
-    if callback then callback(false) end
+    if callback then
+      callback(false)
+    end
     return
   end
 

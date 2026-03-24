@@ -18,8 +18,29 @@ local defaults = {
       'BufLeave',
     },
   },
+  chat = {
+    model = 'claude-opus-4-6',
+    position = 'right',
+    width = 80,
+    height = 20,
+  },
+  agent = {
+    model = 'claude-opus-4-6',
+    position = 'right',
+    width = 50,
+    auto_apply = false,
+    allow_commands = false,
+    allowed_paths = nil,
+    timeout = 300000,
+    max_turns = 25,
+  },
   highlights = {
     ghost_text = 'Comment',
+    chat_user = 'Title',
+    chat_tool_use = 'DiagnosticInfo',
+    chat_separator = 'Comment',
+    diff_add = 'DiffAdd',
+    diff_delete = 'DiffDelete',
   },
 }
 

@@ -41,4 +41,45 @@ function M.get_completion_context()
   }
 end
 
+function M.get_visual_selection()
+  local start_pos = vim.fn.getpos("'<")
+  local end_pos = vim.fn.getpos("'>")
+  local start_line = start_pos[2] - 1
+  local start_col = start_pos[3] - 1
+  local end_line = end_pos[2] - 1
+  local end_col = end_pos[3]
+
+  local buf = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(buf, start_line, end_line + 1, false)
+  if #lines == 0 then return nil end
+
+  -- Trim to selection boundaries
+  if #lines == 1 then
+    lines[1] = lines[1]:sub(start_col + 1, end_col)
+  else
+    lines[1] = lines[1]:sub(start_col + 1)
+    lines[#lines] = lines[#lines]:sub(1, end_col)
+  end
+
+  return {
+    start = { line = start_line, col = start_col },
+    ['end'] = { line = end_line, col = end_col },
+    text = table.concat(lines, '\n'),
+  }
+end
+
+function M.get_chat_context(source_buf)
+  local buf = source_buf or vim.api.nvim_get_current_buf()
+  local file_path = vim.api.nvim_buf_get_name(buf)
+  local filetype = ''
+  if vim.api.nvim_buf_is_valid(buf) then
+    filetype = vim.bo[buf].filetype or ''
+  end
+
+  return {
+    file_path = file_path ~= '' and file_path or nil,
+    filetype = filetype ~= '' and filetype or nil,
+  }
+end
+
 return M
