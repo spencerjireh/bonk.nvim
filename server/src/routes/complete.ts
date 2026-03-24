@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import type { ClientRegistry } from '../lifecycle/clients.js';
-import type { CompleteRequest } from '../types.js';
-import type { RepoIndex } from '../context/repo-index.js';
-import type { EditTracker } from '../context/edit-tracker.js';
 import { assembleContext } from '../context/assembler.js';
+import type { EditTracker } from '../context/edit-tracker.js';
+import type { RepoIndex } from '../context/repo-index.js';
+import type { ClientRegistry } from '../lifecycle/clients.js';
 import { streamCompletion } from '../sdk/client.js';
+import type { CompleteRequest } from '../types.js';
 
 // Track active requests per client for cancellation
 const activeRequests = new Map<string, AbortController>();

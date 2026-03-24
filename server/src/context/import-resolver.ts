@@ -4,23 +4,23 @@ import type { RepoIndex } from './repo-index.js';
 // Regex patterns for import detection
 const PATTERNS: { lang: string[]; regex: RegExp }[] = [
   // JS/TS: import ... from '...' or import '...'
-  { lang: ['typescript', 'typescriptreact', 'javascript', 'javascriptreact'],
-    regex: /(?:import\s+.*?\s+from\s+|import\s+)['"]([^'"]+)['"]/g },
+  {
+    lang: ['typescript', 'typescriptreact', 'javascript', 'javascriptreact'],
+    regex: /(?:import\s+.*?\s+from\s+|import\s+)['"]([^'"]+)['"]/g,
+  },
   // JS/TS: require('...')
-  { lang: ['typescript', 'typescriptreact', 'javascript', 'javascriptreact'],
-    regex: /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g },
+  {
+    lang: ['typescript', 'typescriptreact', 'javascript', 'javascriptreact'],
+    regex: /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+  },
   // Python: from ... import ... or import ...
-  { lang: ['python'],
-    regex: /(?:from\s+(\S+)\s+import|import\s+(\S+))/g },
+  { lang: ['python'], regex: /(?:from\s+(\S+)\s+import|import\s+(\S+))/g },
   // Rust: use ...
-  { lang: ['rust'],
-    regex: /use\s+(?:crate::)?(\S+?);/g },
+  { lang: ['rust'], regex: /use\s+(?:crate::)?(\S+?);/g },
   // C/C++: #include "..."
-  { lang: ['c', 'cpp'],
-    regex: /#include\s+"([^"]+)"/g },
+  { lang: ['c', 'cpp'], regex: /#include\s+"([^"]+)"/g },
   // Lua: require('...')
-  { lang: ['lua'],
-    regex: /require\s*\(?['"]([^'"]+)['"]\)?/g },
+  { lang: ['lua'], regex: /require\s*\(?['"]([^'"]+)['"]\)?/g },
 ];
 
 const JS_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];
@@ -47,7 +47,7 @@ export function resolveImports(
       if (!importPath.startsWith('.') && !importPath.startsWith('/')) continue;
 
       const absPath = resolve(join(repoIndex.root, fileDir), importPath);
-      const relPath = absPath.replace(repoIndex.root + '/', '');
+      const relPath = absPath.replace(`${repoIndex.root}/`, '');
 
       // Try exact match first
       if (repoIndex.getFile(relPath)) {
@@ -64,7 +64,7 @@ export function resolveImports(
             break;
           }
           // Try index file
-          const indexPath = join(relPath, 'index' + ext);
+          const indexPath = join(relPath, `index${ext}`);
           if (repoIndex.getFile(indexPath)) {
             resolved.push(indexPath);
             break;

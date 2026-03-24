@@ -1,7 +1,7 @@
 import type { CompleteRequest } from '../types.js';
-import type { RepoIndex } from './repo-index.js';
 import type { EditTracker } from './edit-tracker.js';
 import { resolveImports } from './import-resolver.js';
+import type { RepoIndex } from './repo-index.js';
 
 const DEFAULT_BUDGET = 32_768;
 const PREFIX_RATIO = 0.75;
@@ -29,7 +29,7 @@ export async function assembleContext(
   }
 
   // P3: Imported files (fill)
-  const relPath = request.file_path.replace(repoIndex.root + '/', '');
+  const relPath = request.file_path.replace(`${repoIndex.root}/`, '');
   const language = mapFiletype(request.filetype);
   const imports = resolveImports(relPath, request.buffer_content, language, repoIndex);
 
@@ -74,7 +74,7 @@ function buildCurrentFileBlock(request: CompleteRequest): string {
   if (line >= 0 && line < lines.length) {
     const cursorLine = lines[line];
     const clampedCol = Math.min(col, cursorLine.length);
-    lines[line] = cursorLine.slice(0, clampedCol) + '<|CURSOR|>' + cursorLine.slice(clampedCol);
+    lines[line] = `${cursorLine.slice(0, clampedCol)}<|CURSOR|>${cursorLine.slice(clampedCol)}`;
   } else if (line >= lines.length) {
     lines.push('<|CURSOR|>');
   }
@@ -90,15 +90,23 @@ function buildEditsBlock(edits: { path: string; diff: string }[]): string {
 
 function truncate(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
-  return text.slice(0, maxLen) + '\n... (truncated)';
+  return `${text.slice(0, maxLen)}\n... (truncated)`;
 }
 
 function mapFiletype(ft: string): string {
   const map: Record<string, string> = {
-    'typescript': 'typescript', 'typescriptreact': 'typescriptreact',
-    'javascript': 'javascript', 'javascriptreact': 'javascriptreact',
-    'python': 'python', 'rust': 'rust', 'go': 'go', 'lua': 'lua',
-    'c': 'c', 'cpp': 'cpp', 'ruby': 'ruby', 'java': 'java',
+    typescript: 'typescript',
+    typescriptreact: 'typescriptreact',
+    javascript: 'javascript',
+    javascriptreact: 'javascriptreact',
+    python: 'python',
+    rust: 'rust',
+    go: 'go',
+    lua: 'lua',
+    c: 'c',
+    cpp: 'cpp',
+    ruby: 'ruby',
+    java: 'java',
   };
   return map[ft] ?? ft;
 }

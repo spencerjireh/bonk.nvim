@@ -1,6 +1,6 @@
-import { writeFileSync, readFileSync, unlinkSync, mkdirSync, renameSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
 import type { LockFile } from '../types.js';
 
 const STATE_DIR = join(homedir(), '.local', 'state', 'bonk');
@@ -17,7 +17,7 @@ export function acquireLock(port: number, token: string): void {
   };
 
   // Atomic write: write to temp file then rename
-  const tmp = LOCK_PATH + '.tmp.' + process.pid;
+  const tmp = `${LOCK_PATH}.tmp.${process.pid}`;
   writeFileSync(tmp, JSON.stringify(lock, null, 2));
   renameSync(tmp, LOCK_PATH);
 }

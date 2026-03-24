@@ -14,7 +14,10 @@ export function contextRoutes(token: string, editTracker: EditTracker): Hono {
   });
 
   app.post('/context/buffers', async (c) => {
-    const body = await c.req.json<{ token: string; buffers: { path: string; content: string }[] }>();
+    const body = await c.req.json<{
+      token: string;
+      buffers: { path: string; content: string }[];
+    }>();
     if (body.token !== token) {
       return c.json({ error: 'unauthorized' }, 401);
     }
