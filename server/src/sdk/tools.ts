@@ -1,7 +1,13 @@
-import * as fs from 'fs/promises';
 import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk';
+import * as fs from 'fs/promises';
 import { z } from 'zod/v4';
-import { MAX_FILE_SIZE, fileListTool, grepSearchTool, textResult, validatePath } from './tool-helpers.js';
+import {
+  MAX_FILE_SIZE,
+  fileListTool,
+  grepSearchTool,
+  textResult,
+  validatePath,
+} from './tool-helpers.js';
 
 export function createChatToolServer(repoRoot: string) {
   const fileRead = tool(

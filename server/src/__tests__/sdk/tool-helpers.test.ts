@@ -9,7 +9,9 @@ describe('validatePath', () => {
   });
 
   it('rejects paths that escape via ..', () => {
-    expect(() => validatePath('../secret/file.txt', repoRoot)).toThrow('outside the repository root');
+    expect(() => validatePath('../secret/file.txt', repoRoot)).toThrow(
+      'outside the repository root',
+    );
   });
 
   it('rejects sibling directories with matching prefix', () => {

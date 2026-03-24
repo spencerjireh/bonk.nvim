@@ -97,4 +97,3 @@ export interface ChatRequest {
     model?: string;
   };
 }
-

@@ -1,7 +1,7 @@
 import { execFile } from 'child_process';
-import * as fs from 'fs/promises';
 import * as path from 'path';
 import { tool } from '@anthropic-ai/claude-agent-sdk';
+import * as fs from 'fs/promises';
 import { z } from 'zod/v4';
 
 export const MAX_FILE_SIZE = 1024 * 1024; // 1MB
