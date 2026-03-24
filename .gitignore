@@ -3,3 +3,5 @@ dist/
 *.js.map
 .DS_Store
 .deps/
+docs/.vitepress/dist
+docs/.vitepress/cache

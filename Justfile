@@ -66,3 +66,21 @@ install-test-deps:
 # Clean build artifacts
 clean:
     rm -rf server/dist
+
+# --- Docs ---
+
+# Start VitePress dev server
+docs-dev:
+    cd docs && npx vitepress dev
+
+# Build documentation site
+docs-build:
+    cd docs && npx vitepress build
+
+# Preview built documentation
+docs-preview:
+    cd docs && npx vitepress preview
+
+# Install docs dependencies
+docs-install:
+    cd docs && npm install
