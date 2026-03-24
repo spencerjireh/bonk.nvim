@@ -4,7 +4,11 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx --watch src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.71",
@@ -13,9 +17,11 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
     "@types/node": "^22.15.3",
     "@types/uuid": "^10.0.0",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.0"
   }
 }

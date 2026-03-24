@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-ts:
+    name: Lint TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      - run: cd server && npm ci
+      - run: npx @biomejs/biome check server/src/
+
+  lint-lua:
+    name: Lint Lua
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Selene
+        uses: taiki-e/install-action@v2
+        with:
+          tool: selene@0.28.0
+      - run: selene lua/
+
+  test-ts:
+    name: Test TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      - run: cd server && npm ci
+      - run: cd server && npx vitest run
+
+  test-lua:
+    name: Test Lua
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: v0.10.3
+      - name: Install plenary.nvim
+        run: |
+          mkdir -p .deps
+          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim .deps/plenary.nvim
+      - name: Run Lua tests
+        run: |
+          timeout 120 nvim --headless -u tests/lua/minimal_init.lua \
+            -c "PlenaryBustedDirectory tests/lua/bonk/ {minimal_init = 'tests/lua/minimal_init.lua'}"
