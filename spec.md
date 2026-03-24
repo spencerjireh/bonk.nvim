@@ -2,13 +2,12 @@
 
 ## Overview
 
-A Neovim plugin providing AI-powered code completion, chat, and agentic coding capabilities using Claude via the Claude Agent SDK. Designed as a self-hosted alternative to Supermaven/Copilot for users with Claude Max subscriptions.
+A Neovim plugin providing AI-powered code completion and chat using Claude via the Claude Agent SDK. Designed as a self-hosted alternative to Supermaven/Copilot for users with Claude Max subscriptions.
 
 ## Goals
 
 - Inline code completions with ghost text rendering in Neovim
 - Chat interface for asking questions about code
-- Agentic mode for multi-file edits and command execution
 - Supermaven-inspired context strategy: repo indexing, edit tracking, prioritized context assembly
 - Uses Claude Agent SDK (TypeScript) -- no direct API calls, no direct CLI invocation
 - Works with Claude Max subscription (no API keys required)
@@ -34,7 +33,6 @@ A Neovim plugin providing AI-powered code completion, chat, and agentic coding c
 |    server.lua      -- server lifecycle   |
 |    completion.lua  -- Phase 1            |
 |    chat.lua        -- Phase 2            |
-|    agent.lua       -- Phase 3            |
 |    context.lua     -- buffer/edit capture |
 |    render.lua      -- ghost text / UI    |
 +------------------+-----------------------+
@@ -50,7 +48,6 @@ A Neovim plugin providing AI-powered code completion, chat, and agentic coding c
 |      health.ts     -- GET /health        |
 |      complete.ts   -- POST /complete     |
 |      chat.ts       -- POST /chat         |
-|      agent.ts      -- POST /agent        |
 |    context/                              |
 |      assembler.ts  -- priority ranking   |
 |      repo-index.ts -- file tree index    |
@@ -155,7 +152,7 @@ The Lua plugin sends edit diffs to the server via `POST /context/edit`. The serv
 
 ### Context Assembly
 
-On each completion/chat/agent request, the server assembles context by priority:
+On each completion/chat request, the server assembles context by priority:
 
 ```
 Default budget: 32,768 characters (configurable)
@@ -463,173 +460,6 @@ ChatSession {
 
 ---
 
-## Phase 3: Agentic Mode
-
-### User Flow
-
-1. User triggers agentic mode via command/keybind
-2. A panel opens showing the agent's plan and progress
-3. User provides a task description (e.g., "refactor fibonacci to use memoization across all files")
-4. Agent reads files, makes edits, optionally runs commands
-5. Changes appear as diffs the user can review and accept/reject
-6. User can interrupt the agent at any point
-
-### Lua Plugin Interface
-
-```lua
--- Additional setup options for Phase 3:
-require('bonk').setup({
-  agent = {
-    model = 'claude-opus-4-6',
-    position = 'right',
-    auto_apply = false,       -- if true, edits are applied immediately; if false, shown as diffs
-    allow_commands = false,   -- if true, agent can run shell commands
-    allowed_paths = nil,      -- restrict file access to specific directories (nil = repo root)
-  },
-})
-
--- Functions exposed:
-require('bonk').agent_start(task)  -- start agentic task
-require('bonk').agent_stop()       -- interrupt agent
-require('bonk').agent_apply()      -- apply all pending diffs
-require('bonk').agent_reject()     -- reject all pending diffs
-require('bonk').agent_diff_next()  -- navigate to next diff
-require('bonk').agent_diff_prev()  -- navigate to previous diff
-require('bonk').agent_diff_accept() -- accept current diff
-require('bonk').agent_diff_reject() -- reject current diff
-```
-
-### API: POST /agent
-
-**Request:**
-
-```json
-{
-  "token": "auth-uuid",
-  "client_id": "nvim-12345",
-  "session_id": "agent-session-xyz",
-  "task": "Refactor the fibonacci function to use memoization. Update all call sites and tests.",
-  "context": {
-    "file_path": "/absolute/path/to/file.ts",
-    "filetype": "typescript",
-    "selection": null,
-    "working_directory": "/absolute/path/to/project"
-  },
-  "options": {
-    "model": "claude-opus-4-6",
-    "allow_commands": false,
-    "allowed_paths": ["/absolute/path/to/project"]
-  }
-}
-```
-
-**Response (SSE stream):**
-
-```
-event: status
-data: {"phase": "analyzing", "message": "Reading fibonacci implementation..."}
-
-event: tool_use
-data: {"tool": "file_read", "input": {"path": "src/math/fibonacci.ts"}}
-
-event: status
-data: {"phase": "planning", "message": "Found 3 files to modify"}
-
-event: diff
-data: {
-  "path": "src/math/fibonacci.ts",
-  "hunks": [
-    {
-      "start_line": 1,
-      "old_text": "function fibonacci(n: number): number {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}",
-      "new_text": "const memo = new Map<number, number>();\n\nfunction fibonacci(n: number): number {\n  if (memo.has(n)) return memo.get(n)!;\n  if (n <= 1) return n;\n  const result = fibonacci(n - 1) + fibonacci(n - 2);\n  memo.set(n, result);\n  return result;\n}"
-    }
-  ]
-}
-
-event: diff
-data: {"path": "tests/fibonacci.test.ts", "hunks": [...]}
-
-event: status
-data: {"phase": "complete", "message": "Modified 2 files"}
-
-event: done
-data: {"session_id": "agent-session-xyz", "files_modified": 2, "usage": {...}}
-```
-
-### Diff Review UI
-
-```
-Layout:
-+-----------------------------+-------------------+
-|                             |  Agent            |
-|   Diff View                 |                   |
-|   (current file)            |  Task: Refactor   |
-|                             |  fibonacci...     |
-|   - old line                |                   |
-|   + new line                |  Status:          |
-|   + new line                |  [x] analyzing    |
-|                             |  [x] planning     |
-|                             |  [ ] applying     |
-|                             |                   |
-|                             |  Files:           |
-|                             |  [~] fibonacci.ts |
-|                             |  [~] fib.test.ts  |
-+-----------------------------+-------------------+
-
-Diff rendering:
-  - Uses Neovim's built-in diff mode where possible
-  - For pending diffs: extmarks with DiffAdd/DiffDelete highlights
-  - Per-hunk accept/reject controls
-```
-
-### Agentic Agent (Server-Side)
-
-```typescript
-const coderAgent = {
-  model: "claude-opus-4-6",
-  instructions: `You are an autonomous coding agent embedded in Neovim. You can read files, search code, make edits, and optionally run commands to complete the user's task.
-
-Rules:
-- Always read relevant files before making changes.
-- Explain your plan before executing.
-- Make minimal, focused changes.
-- Preserve existing code style and conventions.
-- Run tests after changes if a test command is available.
-- Report all files you modify.`,
-  tools: [
-    "file_read",       // read any file in allowed paths
-    "file_write",      // write/create files
-    "file_edit",       // targeted edits (find/replace)
-    "grep_search",     // search codebase
-    "file_list",       // list directory contents
-    "shell_exec",      // run commands (if allowed)
-  ],
-};
-```
-
-### Agent Tool Implementation
-
-Tools are implemented as MCP tools registered with the Agent SDK:
-
-```
-file_read:    Read file contents. Input: { path: string }
-file_write:   Write file contents. Input: { path: string, content: string }
-file_edit:    Find and replace. Input: { path: string, old: string, new: string }
-grep_search:  Regex search. Input: { pattern: string, path?: string, glob?: string }
-file_list:    List directory. Input: { path: string, recursive?: boolean }
-shell_exec:   Run command. Input: { command: string, cwd?: string }
-
-All tools respect:
-  - allowed_paths configuration
-  - .gitignore patterns
-  - 10MB file size limit
-```
-
-Changes from `file_write` and `file_edit` are NOT applied directly to disk. They are captured as diffs, streamed to Neovim as `diff` events, and held pending until the user accepts them. This is the critical safety mechanism for agentic mode.
-
----
-
 ## Server API Summary
 
 | Method | Path | Phase | Description |
@@ -641,8 +471,6 @@ Changes from `file_write` and `file_edit` are NOT applied directly to disk. They
 | POST | /context/buffers | All | Report open buffer list |
 | POST | /complete | 1 | Request inline completion (SSE) |
 | POST | /chat | 2 | Send chat message (SSE) |
-| POST | /agent | 3 | Start agentic task (SSE) |
-| POST | /agent/stop | 3 | Interrupt running agent |
 | GET | /status | All | Server stats, connected clients |
 
 ---
@@ -658,7 +486,6 @@ bonk.nvim/
       server.lua          -- spawn, discover, connect, health check
       completion.lua      -- trigger, SSE parse, accept/dismiss
       chat.lua            -- chat panel, input, message rendering
-      agent.lua           -- agent panel, diff review, accept/reject
       context.lua         -- buffer tracking, edit diff capture
       render.lua          -- ghost text extmarks, highlight groups
       http.lua            -- HTTP client (curl via jobstart), SSE parser
@@ -671,7 +498,6 @@ bonk.nvim/
         register.ts       -- POST /register, /unregister
         complete.ts       -- POST /complete
         chat.ts           -- POST /chat
-        agent.ts          -- POST /agent, /agent/stop
         context.ts        -- POST /context/edit, /context/buffers
         status.ts         -- GET /status
       context/
@@ -681,8 +507,7 @@ bonk.nvim/
         import-resolver.ts -- basic import/require detection
       sdk/
         client.ts         -- Agent SDK client management
-        agents.ts         -- agent definitions (completion, chat, coder)
-        tools.ts          -- MCP tool implementations for Phase 3
+        agents.ts         -- agent definitions (completion, chat)
       lifecycle/
         lock.ts           -- lock file management
         clients.ts        -- client registry, heartbeat, idle shutdown
@@ -728,7 +553,7 @@ bonk.nvim/
 | Server not running | Lua plugin spawns it, retries connection 3 times with 1s backoff |
 | Server crashes | Lua plugin detects on next request, removes stale lock, respawns |
 | Agent SDK error | SSE error event sent to client, ghost text cleared, user notified |
-| Request timeout | 30s default for completions, 120s for chat, 300s for agent. Cancel sent to server on timeout. |
+| Request timeout | 30s default for completions, 120s for chat. Cancel sent to server on timeout. |
 | Network error (localhost) | Retry once, then notify user |
 | Multiple rapid triggers | New trigger cancels in-flight request before sending new one |
 
@@ -766,16 +591,6 @@ bonk.nvim/
     width = 80,
     height = 20,
     session_timeout = 1800,       -- seconds
-  },
-
-  -- Phase 3: Agent
-  agent = {
-    model = 'claude-opus-4-6',
-    position = 'right',
-    auto_apply = false,
-    allow_commands = false,
-    allowed_paths = nil,
-    timeout = 300000,             -- ms
   },
 
   -- Context

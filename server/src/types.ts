@@ -98,29 +98,3 @@ export interface ChatRequest {
   };
 }
 
-// Agent types
-
-export interface DiffHunk {
-  start_line: number;
-  old_text: string;
-  new_text: string;
-}
-
-export interface AgentRequest {
-  token: string;
-  client_id: string;
-  session_id?: string;
-  task: string;
-  context?: {
-    file_path?: string;
-    filetype?: string;
-    selection?: ChatSelection;
-    working_directory?: string;
-  };
-  options?: {
-    model?: string;
-    allow_commands?: boolean;
-    allowed_paths?: string[];
-    max_turns?: number;
-  };
-}

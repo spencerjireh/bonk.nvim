@@ -139,4 +139,5 @@ bonk.nvim is being built in phases:
 
 - **Phase 1: Inline completions** -- done. Ghost text streaming, accept/dismiss, context assembly.
 - **Phase 2: Chat** -- a split/float panel for asking questions about your code with conversation history.
-- **Phase 3: Agentic mode** -- multi-file edits with diff review. Claude reads, writes, and runs commands; you review and approve.
+
+> Agent mode was considered but intentionally dropped -- Claude Code in a terminal is strictly better for multi-file edits. bonk.nvim focuses on what an editor plugin does best: inline completions and contextual chat.

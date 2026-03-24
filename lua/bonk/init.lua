@@ -9,8 +9,6 @@ function M.setup(opts)
   vim.api.nvim_set_hl(0, 'BonkGhost', { link = config.highlights.ghost_text, default = true })
   vim.api.nvim_set_hl(0, 'BonkChatUser', { link = config.highlights.chat_user, default = true })
   vim.api.nvim_set_hl(0, 'BonkChatToolUse', { link = config.highlights.chat_tool_use, default = true })
-  vim.api.nvim_set_hl(0, 'BonkDiffAdd', { link = config.highlights.diff_add, default = true })
-  vim.api.nvim_set_hl(0, 'BonkDiffDelete', { link = config.highlights.diff_delete, default = true })
 
   -- Auto-dismiss autocmds
   local group = vim.api.nvim_create_augroup('bonk', { clear = true })
@@ -86,39 +84,6 @@ end
 
 function M.chat_ask(text)
   require('bonk.chat').ask(text)
-end
-
--- Agent API
-function M.agent_start(task)
-  require('bonk.agent').start(task)
-end
-
-function M.agent_stop()
-  require('bonk.agent').stop()
-end
-
-function M.agent_apply()
-  require('bonk.agent').apply()
-end
-
-function M.agent_reject()
-  require('bonk.agent').reject()
-end
-
-function M.agent_diff_next()
-  require('bonk.agent').diff_next()
-end
-
-function M.agent_diff_prev()
-  require('bonk.agent').diff_prev()
-end
-
-function M.agent_diff_accept()
-  require('bonk.agent').diff_accept()
-end
-
-function M.agent_diff_reject()
-  require('bonk.agent').diff_reject()
 end
 
 return M

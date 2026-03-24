@@ -23,8 +23,6 @@ local function parse_sse_lines(lines, callbacks)
             callbacks.on_tool_use(parsed)
           elseif event_type == 'status' and callbacks.on_status then
             callbacks.on_status(parsed)
-          elseif event_type == 'diff' and callbacks.on_diff then
-            callbacks.on_diff(parsed)
           end
         end
       end

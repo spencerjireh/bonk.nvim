@@ -1,13 +1,11 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { v4 as uuidv4 } from 'uuid';
-import { AgentSessionManager } from './agent/sessions.js';
 import { ChatSessionManager } from './chat/sessions.js';
 import { EditTracker } from './context/edit-tracker.js';
 import { RepoIndex } from './context/repo-index.js';
 import { ClientRegistry } from './lifecycle/clients.js';
 import { acquireLock, releaseLock } from './lifecycle/lock.js';
-import { agentRoutes } from './routes/agent.js';
 import { chatRoutes } from './routes/chat.js';
 import { completeRoutes } from './routes/complete.js';
 import { contextRoutes } from './routes/context.js';
@@ -25,12 +23,10 @@ const startedAt = Date.now();
 const repoIndex = new RepoIndex(repoRoot);
 const editTracker = new EditTracker();
 const chatSessions = new ChatSessionManager();
-const agentSessions = new AgentSessionManager();
 
 function gracefulShutdown() {
   console.error('[bonk] shutting down');
   releaseLock();
-  agentSessions.destroy();
   chatSessions.destroy();
   clients.destroy();
   process.exit(0);
@@ -46,7 +42,6 @@ app.route('/', statusRoutes(clients, startedAt));
 app.route('/', completeRoutes(clients, token, repoIndex, editTracker));
 app.route('/', contextRoutes(token, editTracker));
 app.route('/', chatRoutes(clients, token, repoIndex, chatSessions));
-app.route('/', agentRoutes(clients, token, repoIndex, agentSessions));
 
 const server = serve(
   {
