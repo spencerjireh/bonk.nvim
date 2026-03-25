@@ -4,10 +4,18 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 export default withMermaid(
   defineConfig({
     title: 'bonk.nvim',
-    description: 'AI code completion for Neovim, powered by Claude',
+    description: 'AI completions for Neovim',
     base: '/bonk.nvim/',
+    appearance: 'dark',
+
+    head: [
+      ['link', { rel: 'icon', href: '/bonk.nvim/logo.svg', type: 'image/svg+xml' }],
+    ],
 
     themeConfig: {
+      logo: '/logo.svg',
+      siteTitle: 'bonk.nvim',
+
       nav: [
         { text: 'Guide', link: '/guide/architecture' },
         { text: 'Reference', link: '/reference/api' },

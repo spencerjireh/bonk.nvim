@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="currentColor">
+  <!--
+    bonk.nvim — minimal cat silhouette
+    Ears + head, single filled path.
+    Uses currentColor so it works in any context.
+  -->
+  <path d="M6 38 C6 26 8 20 12 16 L4 2 18 14 H30 L44 2 36 16 C40 20 42 26 42 38 Q42 46 24 46 Q6 46 6 38Z"/>
+</svg>
