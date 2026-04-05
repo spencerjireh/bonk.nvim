@@ -1,5 +1,13 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { Options } from '@anthropic-ai/claude-agent-sdk';
+import {
+  chunkText,
+  getE2eCompletionText,
+  getE2eStreamChunkSize,
+  getE2eStreamDelayMs,
+  isE2eMode,
+  maybeDelay,
+} from './e2e.js';
 
 const COMPLETION_SYSTEM_PROMPT = `You are a code completion engine. Given a file with a cursor position marked by <|CURSOR|>, output ONLY the code that should be inserted at that position.
 
@@ -38,6 +46,25 @@ export async function* streamCompletion(
   let fullText = '';
 
   try {
+    if (isE2eMode()) {
+      const text = getE2eCompletionText();
+      const delayMs = getE2eStreamDelayMs();
+
+      for (const chunk of chunkText(text, getE2eStreamChunkSize())) {
+        if (signal?.aborted) break;
+        yield { type: 'token', text: chunk };
+        fullText += chunk;
+        await maybeDelay(delayMs);
+      }
+
+      yield {
+        type: 'done',
+        full_text: fullText,
+        usage: { input_tokens: 0, output_tokens: 0 },
+      };
+      return;
+    }
+
     const queryOpts: Options = {
       systemPrompt: COMPLETION_SYSTEM_PROMPT,
       maxTurns: 1,

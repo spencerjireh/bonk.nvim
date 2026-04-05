@@ -48,6 +48,10 @@ lint-lua:
 # Run all tests
 test: test-ts test-lua
 
+# Run end-to-end tests against headless Neovim
+test-e2e:
+    cd server && npx tsc && cd .. && node e2e/run.mjs
+
 # Run all linters
 lint: lint-ts lint-lua
 

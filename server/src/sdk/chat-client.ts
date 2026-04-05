@@ -1,5 +1,15 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { McpSdkServerConfigWithInstance, Options } from '@anthropic-ai/claude-agent-sdk';
+import {
+  chunkText,
+  getE2eChatText,
+  getE2eChatToolName,
+  getE2eChatToolStatus,
+  getE2eStreamChunkSize,
+  getE2eStreamDelayMs,
+  isE2eMode,
+  maybeDelay,
+} from './e2e.js';
 
 const CHAT_SYSTEM_PROMPT = `You are a coding assistant embedded in Neovim. The user will ask questions about their code. You have access to their current file, selection, and referenced files. You also have tools to read files, search the codebase, and list directories.
 
@@ -53,6 +63,30 @@ export async function* streamChat(
   const prompt = context ? `${context}\n\n${message}` : message;
 
   try {
+    if (isE2eMode()) {
+      const delayMs = getE2eStreamDelayMs();
+      const toolStatus = getE2eChatToolStatus();
+      if (toolStatus) {
+        yield { type: 'tool_use', tool: getE2eChatToolName(), status: toolStatus };
+        await maybeDelay(delayMs);
+      }
+
+      sessionId = options.sdkSessionId ?? 'e2e-chat-session';
+      for (const chunk of chunkText(getE2eChatText(), getE2eStreamChunkSize())) {
+        if (signal?.aborted) break;
+        yield { type: 'token', text: chunk };
+        fullText += chunk;
+        await maybeDelay(delayMs);
+      }
+
+      yield {
+        type: 'done',
+        session_id: sessionId,
+        usage: resultUsage,
+      };
+      return;
+    }
+
     const queryOpts: Options = {
       systemPrompt: CHAT_SYSTEM_PROMPT,
       model: options.model ?? 'claude-opus-4-6',
@@ -85,6 +119,7 @@ export async function* streamChat(
         ) {
           const text = (streamEvent.delta as { type: string; text: string }).text;
           if (text) {
+            fullText += text;
             yield { type: 'token', text };
           }
         }
